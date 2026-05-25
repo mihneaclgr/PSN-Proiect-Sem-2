@@ -20,9 +20,11 @@
     .msg-input { width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; font-size: 14px; outline: none; }
     .msg-input:focus { border-color: #22c55e; }
     .msg-list { list-style: none; padding: 0; font-size: 14px; color: #374151; }
-    .msg-item { padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; }
+    .msg-item { padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; }
     .msg-item:last-child { border-bottom: none; }
     .msg-index { color: #888; font-weight: bold; margin-right: 8px; }
+    .delete-btn { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: background 0.2s; }
+    .delete-btn:hover { background: #dc2626; }
   </style>
 </head>
 <body>
@@ -55,6 +57,11 @@
       <h2>Istoric Mesaje EEPROM (Ultimele 10)</h2>
       <ul class="msg-list" id="msgList"></ul>
     </div>
+
+    <div class="card">
+      <h2>Evenimente Inundație (Ultimele 10)</h2>
+      <ul class="msg-list" id="floodList"></ul>
+    </div>
   </div>
 
   <script>
@@ -64,6 +71,7 @@
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
+
         document.getElementById('temp').textContent = data.temperature ?? '--';
         document.getElementById('hum').textContent = data.humidity ?? '--';
 
@@ -82,6 +90,19 @@
               li.className = 'msg-item';
               li.innerHTML = `<span><span class="msg-index">#${index + 1}</span>${msg}</span>`;
               msgList.appendChild(li);
+            }
+          });
+        }
+
+        const floodList = document.getElementById('floodList');
+        floodList.innerHTML = '';
+        if (data.floods) {
+          data.floods.forEach((val, index) => {
+            if (val === 1) {
+              const li = document.createElement('li');
+              li.className = 'msg-item';
+              li.innerHTML = `<span>Alarma #${index}</span> <button class="delete-btn" onclick="deleteFlood(${index})">Șterge</button>`;
+              floodList.appendChild(li);
             }
           });
         }
@@ -119,6 +140,15 @@
         setTimeout(fetchStatus, 200);
       } catch(e) {
         console.error('Eroare mesaj:', e);
+      }
+    }
+
+    async function deleteFlood(id) {
+      try {
+        await fetch(`/api/flood/${id}`, { method: 'DELETE' });
+        setTimeout(fetchStatus, 200);
+      } catch(e) {
+        console.error('Eroare stergere inundatie:', e);
       }
     }
 
