@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px 16px; }
+    .dashboard { width: 100%; max-width: 480px; }
+    h1 { font-size: 22px; margin-bottom: 24px; color: #1a1a1a; }
+    .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .value { font-size: 48px; font-weight: 500; color: #1a1a1a; }
+    .unit { font-size: 20px; color: #888; }
+    .led-btn { width: 100%; padding: 14px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: background 0.2s; }
+    .led-btn.on  { background: #22c55e; color: white; }
+    .led-btn.off { background: #e5e7eb; color: #374151; }
+    .status { font-size: 13px; color: #888; margin-top: 8px; text-align: center; }
+    .msg-input { width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; font-size: 14px; outline: none; }
+    .msg-input:focus { border-color: #22c55e; }
+    .msg-list { list-style: none; padding: 0; font-size: 14px; color: #374151; }
+    .msg-item { padding: 8px 0; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; }
+    .msg-item:last-child { border-bottom: none; }
+    .msg-index { color: #888; font-weight: bold; margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <h1>IoT Dashboard</h1>
+
+    <div class="card">
+      <h2>Temperatură</h2>
+      <div><span class="value" id="temp">--</span><span class="unit"> °C</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Umiditate</h2>
+      <div><span class="value" id="hum">--</span><span class="unit"> %</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Control LED</h2>
+      <button class="led-btn off" id="led-btn" onclick="toggleLed()">LED OFF</button>
+      <p class="status" id="led-status">Stare: necunoscută</p>
+    </div>
+
+    <div class="card">
+      <h2>Trimite Mesaj</h2>
+      <input type="text" id="msgInput" class="msg-input" placeholder="Introduceți mesajul (max. 19 caractere)..." maxlength="19">
+      <button class="led-btn on" onclick="sendMsg()">Trimite către Sistem</button>
+    </div>
+
+    <div class="card">
+      <h2>Istoric Mesaje EEPROM (Ultimele 10)</h2>
+      <ul class="msg-list" id="msgList"></ul>
+    </div>
+  </div>
+
+  <script>
+    let ledState = 'off';
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        document.getElementById('temp').textContent = data.temperature ?? '--';
+        document.getElementById('hum').textContent = data.humidity ?? '--';
+
+        const btn = document.getElementById('led-btn');
+        ledState = data.led === 'ON' ? 'on' : 'off';
+        btn.textContent = `LED ${data.led}`;
+        btn.className = `led-btn ${ledState}`;
+        document.getElementById('led-status').textContent = `Stare: ${data.led}`;
+
+        const msgList = document.getElementById('msgList');
+        msgList.innerHTML = '';
+        if (data.messages) {
+          data.messages.forEach((msg, index) => {
+            if (msg && msg.trim() !== '') {
+              const li = document.createElement('li');
+              li.className = 'msg-item';
+              li.innerHTML = `<span><span class="msg-index">#${index + 1}</span>${msg}</span>`;
+              msgList.appendChild(li);
+            }
+          });
+        }
+      } catch(e) {
+        console.error('Eroare fetch status:', e);
+      }
+    }
+
+    async function toggleLed() {
+      const newState = ledState === 'on' ? 'off' : 'on';
+      try {
+        const res = await fetch('/api/led', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state: newState })
+        });
+        if (res.ok) fetchStatus();
+      } catch (e) {
+        console.error('Eroare trimitere:', e);
+      }
+    }
+
+    async function sendMsg() {
+      const input = document.getElementById('msgInput');
+      const text = input.value;
+      if (!text.trim()) return;
+
+      try {
+        await fetch('/api/message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        input.value = '';
+        setTimeout(fetchStatus, 200);
+      } catch(e) {
+        console.error('Eroare mesaj:', e);
+      }
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 500);
+  </script>
+</body>
+</html>
