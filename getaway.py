@@ -65,7 +65,10 @@ while True:
 
         for cmd in commands:
             if ser and ser.is_open:
-                ser.write(cmd.encode())
+                if not cmd.endswith('\n'):
+                    cmd += '\n'
+                ser.write(cmd.encode('utf-8'))
+                ser.flush()
 
         time.sleep(0.1)
     except Exception as e:

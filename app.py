@@ -51,7 +51,7 @@ def send_message():
     return jsonify({"ok": True})
 
 
-@app.route('/api/flood/<int:id>', methods=['POST'])
+@app.route('/api/flood/<int:id>', methods=['DELETE'])
 def delete_flood(id):
     state["pending_commands"].append(f"D{id}\n")
     return jsonify({"ok": True})

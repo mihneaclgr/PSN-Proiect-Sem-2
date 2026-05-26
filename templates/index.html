@@ -101,7 +101,7 @@
             if (val === 1) {
               const li = document.createElement('li');
               li.className = 'msg-item';
-              li.innerHTML = `<span>Alarma #${index}</span> <button class="delete-btn" onclick="deleteFlood(${index})">Șterge</button>`;
+              li.innerHTML = `<span>Alarma #${index}</span>`;
               floodList.appendChild(li);
             }
           });
@@ -145,7 +145,7 @@
 
     async function deleteFlood(id) {
       try {
-        await fetch(`/api/flood/${id}`, { method: 'POST' });
+        await fetch(`/api/flood/${id}`, { method: 'DELETE' });
         setTimeout(fetchStatus, 200);
       } catch(e) {
         console.error('Eroare stergere inundatie:', e);
