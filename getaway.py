@@ -5,7 +5,7 @@ import smtplib
 from email.message import EmailMessage
 
 # ÎNLOCUIEȘTE CU LINK-UL TĂU DIN AZURE (ex: https://nume-proiect.azurewebsites.net)
-CLOUD_URL = "http://localhost:8000/api/update"
+CLOUD_URL = "psn-dragan-calugar-fycvhrhqapewf8cc.uaenorth-01.azurewebsites.net"
 
 state = {
     "temperature": "--",
