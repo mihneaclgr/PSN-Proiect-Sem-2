@@ -24,7 +24,7 @@ def send_email():
         msg['From'] = "proiectpsnmihneasidarius@gmail.com"
         msg['To'] = "dariuscdragan66@gmail.com"
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login("proiectpsnmihneasidarius@gmail.com", "PAROLA_TA_DE_APLICATIE")
+        server.login("proiectpsnmihneasidarius@gmail.com", "kneh drqf uegg tgqg")
         server.send_message(msg)
         server.quit()
         print("Email inundație trimis.")
@@ -36,7 +36,8 @@ try:
     ser = serial.Serial('/dev/ttyACM0', 115200, timeout=0.1)
     time.sleep(2)
     ser.write(b'R')
-except:
+except Exception as e:
+    print(f"Eroare conectare serial: {e}")
     ser = None
 
 while True:
@@ -58,6 +59,7 @@ while True:
                 parts = line.split(":", 2)
                 if len(parts) >= 3: state["floods"][int(parts[1])] = int(parts[2])
 
+        #print(state)
         res = requests.post(CLOUD_URL, json={"state": state}, timeout=5)
         commands = res.json().get("commands", [])
 
@@ -65,6 +67,6 @@ while True:
             if ser and ser.is_open:
                 ser.write(cmd.encode())
 
-        time.sleep(0.5)
+        time.sleep(0.1)
     except Exception as e:
         time.sleep(1)
